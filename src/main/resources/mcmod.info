@@ -1,0 +1,16 @@
+[
+{
+  "modid": "efficientslaughtering",
+  "name": "EfficientSlaughtering",
+  "description": "Efficient and compact mod slaughtering",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Dogboy21"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
