@@ -26,6 +26,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.projectile.EntityThrowable;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 
@@ -36,39 +37,39 @@ public class EntityCapturingBall extends EntityThrowable {
     public EntityCapturingBall(World worldIn) {
         super(worldIn);
         this.setEntityInvulnerable(true);
-        this.setSize(0.5f, 0.5f);
+        this.setSize(0.3f, 0.3f);
     }
 
     public EntityCapturingBall(World worldIn, EntityLivingBase throwerIn, boolean precise) {
         super(worldIn, throwerIn);
         this.precise = precise;
         this.setEntityInvulnerable(true);
-        this.setSize(0.5f, 0.5f);
+        this.setSize(0.3f, 0.3f);
     }
 
     @Override
     protected void onImpact(RayTraceResult result) {
         if (result.entityHit instanceof EntityLiving) {
             EntityLiving hit = (EntityLiving) result.entityHit;
-            String name = EntityList.getEntityString(hit);
-
             ItemStack stack = new ItemStack(Registry.CAPTURING_BALL, 1, this.precise ? 1 : 0);
+            ResourceLocation key = EntityList.getKey(hit);
 
-            if (!SlaughteringRegistry.isBlacklisted(hit.getClass()) && name != null) {
+            if (!SlaughteringRegistry.isBlacklisted(hit.getClass()) && key != null) {
                 NBTTagCompound nbt = new NBTTagCompound();
                 hit.writeEntityToNBT(nbt);
+                nbt.setString("id", key.toString());
 
                 NBTTagCompound itemData = new NBTTagCompound();
-                itemData.setString("CapturedEntityName", name);
                 itemData.setTag("CapturedEntity", nbt);
 
 
                 stack.setTagCompound(itemData);
+                hit.setDead();
             }
 
             this.setDead();
             if (!this.world.isRemote) {
-                this.entityDropItem(stack, 0.5f);
+                this.entityDropItem(stack, 0);
             }
 
             return;
@@ -77,7 +78,7 @@ public class EntityCapturingBall extends EntityThrowable {
         if (result.typeOfHit == RayTraceResult.Type.BLOCK) {
             this.setDead();
             if (!this.world.isRemote) {
-                this.entityDropItem(new ItemStack(Registry.CAPTURING_BALL, 1, this.precise ? 1 : 0), 0.5f);
+                this.entityDropItem(new ItemStack(Registry.CAPTURING_BALL, 1, this.precise ? 1 : 0), 0);
             }
         }
     }
@@ -90,6 +91,11 @@ public class EntityCapturingBall extends EntityThrowable {
     @Override
     public void readEntityFromNBT(NBTTagCompound compound) {
         this.precise = compound.getBoolean("Precise");
+    }
+
+    @Override
+    public void onUpdate() {
+        super.onUpdate();
     }
 
 }

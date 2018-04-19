@@ -19,8 +19,10 @@
 package ml.dogboy.efficientslaughtering.client.renderer;
 
 import ml.dogboy.efficientslaughtering.Reference;
+import ml.dogboy.efficientslaughtering.client.ClientUtils;
 import ml.dogboy.efficientslaughtering.client.models.ModelCapturingBall;
 import ml.dogboy.efficientslaughtering.entity.EntityCapturingBall;
+import ml.dogboy.efficientslaughtering.item.ItemCapturingBall;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
@@ -46,17 +48,49 @@ public class RenderCapturingBall extends Render<EntityCapturingBall> {
 
     @Override
     public void doRender(EntityCapturingBall entity, double x, double y, double z, float entityYaw, float partialTicks) {
+        this.bindEntityTexture(entity);
+
         GlStateManager.pushMatrix();
 
-        GlStateManager.translate((float)x - 0.0625f, (float)y - 0.8125f, (float)z - 0.0625f);
-
-        this.bindEntityTexture(entity);
+        this.applyPos(x, y, z);
+        ClientUtils.applyColor(ItemCapturingBall.PRIMARY_COLOR);
 
         RenderCapturingBall.MODEL.render(entity, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F);
 
         GlStateManager.popMatrix();
-        super.doRender(entity, x, y, z, entityYaw, partialTicks);
     }
 
+    @Override
+    public boolean isMultipass() {
+        return true;
+    }
+
+    @Override
+    public void renderMultipass(EntityCapturingBall entity, double x, double y, double z, float entityYaw, float partialTicks) {
+        this.bindEntityTexture(entity);
+
+        GlStateManager.pushMatrix();
+
+        this.applyPos(x, y, z);
+        ClientUtils.applyColor(ItemCapturingBall.SECONDARY_COLOR);
+
+        RenderCapturingBall.MODEL.renderMultipass(entity, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F);
+
+        GlStateManager.popMatrix();
+
+        GlStateManager.pushMatrix();
+
+        this.applyPos(x, y, z);
+        ClientUtils.applyColor(ClientUtils.darken(ItemCapturingBall.PRIMARY_COLOR, 0.8f));
+
+        RenderCapturingBall.MODEL.renderStripe(entity, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F);
+
+        GlStateManager.popMatrix();
+    }
+
+    private void applyPos(double x, double y, double z) {
+        GlStateManager.translate((float)x - 0.03125f, (float)y - (0.0625f * 8f), (float)z - 0.03125f);
+        GlStateManager.scale(0.6f, 0.6f, 0.6f);
+    }
 
 }

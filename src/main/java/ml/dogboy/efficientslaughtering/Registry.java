@@ -58,7 +58,7 @@ public class Registry {
                         .entity(EntityCapturingBall.class)
                         .id(new ResourceLocation(Reference.MODID, "thrown_capturing_ball"), 0)
                         .name("thrown_capturing_ball")
-                        .tracker(80, 1, false)
+                        .tracker(80, 1, true)
                         .build()
         );
     }

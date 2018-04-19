@@ -3,5 +3,7 @@ itemGroup.efficientslaughtering=Efficient Slaughtering
 item.efficientslaughtering.capturing_ball.0.name=Mob Capturing Ball
 item.efficientslaughtering.capturing_ball.1.name=Mob Capturing Ball (Precise)
 
+entity.thrown_capturing_ball.name=Capturing Ball
+
 tooltip.efficientslaughtering.no_captured_entity=No Entity captured
 tooltip.efficientslaughtering.captured_entity=Contains %s

@@ -18,16 +18,20 @@
 
 package ml.dogboy.efficientslaughtering.item;
 
+import ml.dogboy.efficientslaughtering.client.ClientUtils;
 import ml.dogboy.efficientslaughtering.entity.EntityCapturingBall;
+import net.minecraft.client.renderer.color.IItemColor;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -35,7 +39,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class ItemCapturingBall extends ItemBase {
+public class ItemCapturingBall extends ItemBase implements IItemColor {
+
+    public static final int TINT_BASE = 0;
+    public static final int TINT_CENTER = 1;
+    public static final int TINT_MIDDLE = 2;
+
+    public static final int PRIMARY_COLOR = 9922967;
+    public static final int SECONDARY_COLOR = 6844571;
 
     public ItemCapturingBall() {
         super("capturing_ball");
@@ -49,17 +60,29 @@ public class ItemCapturingBall extends ItemBase {
         return super.getUnlocalizedName() + "." + meta;
     }
 
+    public boolean hasCapturedEntity(ItemStack stack) {
+        return stack.hasTagCompound() && stack.getTagCompound().hasKey("CapturedEntity");
+    }
+
+    @Nullable
+    public ResourceLocation getCapturedEntity(ItemStack stack) {
+        if (!this.hasCapturedEntity(stack)) {
+            return null;
+        }
+
+        return new ResourceLocation(stack.getTagCompound().getCompoundTag("CapturedEntity").getString("id"));
+    }
+
     @Override
     @SideOnly(Side.CLIENT)
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("CapturedEntity")) {
-            String unlocName = stack.getTagCompound().getString("CapturedEntityName");
-            if (unlocName.isEmpty()) {
-                unlocName = "generic";
-            }
+        if (this.hasCapturedEntity(stack)) {
+            ResourceLocation id = this.getCapturedEntity(stack);
+            if (id != null) {
+                String name = EntityList.getTranslationName(id);
 
-            tooltip.add(I18n.format("tooltip.efficientslaughtering.captured_entity",
-                    I18n.format("entity." + unlocName + ".name")));
+                tooltip.add(I18n.format("tooltip.efficientslaughtering.captured_entity", name));
+            }
         } else {
             tooltip.add(I18n.format("tooltip.efficientslaughtering.no_captured_entity"));
         }
@@ -77,14 +100,48 @@ public class ItemCapturingBall extends ItemBase {
     public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
         ItemStack stack = playerIn.getHeldItem(handIn);
 
+        if (this.hasCapturedEntity(stack)) {
+            return new ActionResult<>(EnumActionResult.FAIL, stack);
+        }
+
         stack.shrink(1);
 
         if (!worldIn.isRemote) {
             EntityCapturingBall entity = new EntityCapturingBall(worldIn, playerIn, stack.getMetadata() == 1);
-            entity.shoot(playerIn, playerIn.rotationPitch, playerIn.rotationYaw, 0.0F, 2f, 0.3F);
+            entity.shoot(playerIn, playerIn.rotationPitch, playerIn.rotationYaw, 0.0F, 1.5f, 0.3F);
             worldIn.spawnEntity(entity);
         }
 
         return new ActionResult<>(EnumActionResult.SUCCESS, stack);
     }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public int colorMultiplier(ItemStack stack, int tintIndex) {
+        if (this.hasCapturedEntity(stack)) {
+            ResourceLocation entity = this.getCapturedEntity(stack);
+            if (entity != null) {
+                EntityList.EntityEggInfo eggInfo = EntityList.ENTITY_EGGS.get(entity);
+
+                if (tintIndex == TINT_BASE) {
+                    return eggInfo.primaryColor;
+                } else if (tintIndex == TINT_CENTER) {
+                    return eggInfo.secondaryColor;
+                } else if (tintIndex == TINT_MIDDLE) {
+                    return ClientUtils.darken(eggInfo.primaryColor, 0.8f);
+                }
+            }
+        }
+
+        if (tintIndex == TINT_BASE) {
+            return PRIMARY_COLOR;
+        } else if (tintIndex == TINT_CENTER) {
+            return SECONDARY_COLOR;
+        } else if (tintIndex == TINT_MIDDLE) {
+            return ClientUtils.darken(PRIMARY_COLOR, 0.8f);
+        }
+
+        return 0;
+    }
+
 }
