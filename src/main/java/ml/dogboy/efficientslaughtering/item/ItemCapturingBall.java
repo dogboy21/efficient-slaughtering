@@ -19,15 +19,21 @@
 package ml.dogboy.efficientslaughtering.item;
 
 import ml.dogboy.efficientslaughtering.entity.EntityCapturingBall;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityEgg;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 public class ItemCapturingBall extends ItemBase {
 
@@ -41,6 +47,22 @@ public class ItemCapturingBall extends ItemBase {
     public String getUnlocalizedName(ItemStack stack) {
         int meta = stack.getMetadata();
         return super.getUnlocalizedName() + "." + meta;
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("CapturedEntity")) {
+            String unlocName = stack.getTagCompound().getString("CapturedEntityName");
+            if (unlocName.isEmpty()) {
+                unlocName = "generic";
+            }
+
+            tooltip.add(I18n.format("tooltip.efficientslaughtering.captured_entity",
+                    I18n.format("entity." + unlocName + ".name")));
+        } else {
+            tooltip.add(I18n.format("tooltip.efficientslaughtering.no_captured_entity"));
+        }
     }
 
     @Override

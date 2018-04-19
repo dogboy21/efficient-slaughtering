@@ -18,8 +18,10 @@
 
 package ml.dogboy.efficientslaughtering.entity;
 
-import ml.dogboy.efficientslaughtering.EfficientSlaughtering;
 import ml.dogboy.efficientslaughtering.Registry;
+import ml.dogboy.efficientslaughtering.api.SlaughteringRegistry;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.projectile.EntityThrowable;
 import net.minecraft.item.ItemStack;
@@ -46,11 +48,29 @@ public class EntityCapturingBall extends EntityThrowable {
 
     @Override
     protected void onImpact(RayTraceResult result) {
-        if (result.entityHit != null) {
+        if (result.entityHit instanceof EntityLiving) {
+            EntityLiving hit = (EntityLiving) result.entityHit;
+            String name = EntityList.getEntityString(hit);
+
+            ItemStack stack = new ItemStack(Registry.CAPTURING_BALL, 1, this.precise ? 1 : 0);
+
+            if (!SlaughteringRegistry.isBlacklisted(hit.getClass()) && name != null) {
+                NBTTagCompound nbt = new NBTTagCompound();
+                hit.writeEntityToNBT(nbt);
+
+                NBTTagCompound itemData = new NBTTagCompound();
+                itemData.setString("CapturedEntityName", name);
+                itemData.setTag("CapturedEntity", nbt);
+
+
+                stack.setTagCompound(itemData);
+            }
+
             this.setDead();
             if (!this.world.isRemote) {
-                EfficientSlaughtering.logger.info(result.entityHit);
+                this.entityDropItem(stack, 0.5f);
             }
+
             return;
         }
 
