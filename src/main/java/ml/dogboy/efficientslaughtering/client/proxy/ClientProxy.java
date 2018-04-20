@@ -33,13 +33,15 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ClientProxy extends CommonProxy {
 
+    private static Minecraft minecraft;
+
     @Override
     public void onPreInit() {
+        ClientProxy.minecraft = Minecraft.getMinecraft();
+
         MinecraftForge.EVENT_BUS.register(this);
 
         RenderingRegistry.registerEntityRenderingHandler(EntityCapturingBall.class, RenderCapturingBall::new);
@@ -51,7 +53,6 @@ public class ClientProxy extends CommonProxy {
     }
 
     @SubscribeEvent
-    @SideOnly(Side.CLIENT)
     public void registerModels(ModelRegistryEvent event) {
         EfficientSlaughtering.logger.info("Registering models");
 

@@ -21,8 +21,8 @@ package ml.dogboy.efficientslaughtering.entity;
 import ml.dogboy.efficientslaughtering.Registry;
 import ml.dogboy.efficientslaughtering.api.SlaughteringRegistry;
 import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.projectile.EntityThrowable;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -49,15 +49,22 @@ public class EntityCapturingBall extends EntityThrowable {
 
     @Override
     protected void onImpact(RayTraceResult result) {
-        if (result.entityHit instanceof EntityLiving) {
-            EntityLiving hit = (EntityLiving) result.entityHit;
+        if (result.entityHit instanceof EntityLivingBase && !(result.entityHit instanceof EntityPlayer)) {
+            EntityLivingBase hit = (EntityLivingBase) result.entityHit;
             ItemStack stack = new ItemStack(Registry.CAPTURING_BALL, 1, this.precise ? 1 : 0);
             ResourceLocation key = EntityList.getKey(hit);
 
-            if (!SlaughteringRegistry.isBlacklisted(hit.getClass()) && key != null) {
+            if (!SlaughteringRegistry.isBlacklisted(hit) && key != null) {
                 NBTTagCompound nbt = new NBTTagCompound();
                 hit.writeEntityToNBT(nbt);
                 nbt.setString("id", key.toString());
+
+                if (hit.hasCustomName()) {
+                    nbt.setString("CustomName", hit.getCustomNameTag());
+                }
+                if (hit.getAlwaysRenderNameTag()) {
+                    nbt.setBoolean("CustomNameVisible", hit.getAlwaysRenderNameTag());
+                }
 
                 NBTTagCompound itemData = new NBTTagCompound();
                 itemData.setTag("CapturedEntity", nbt);

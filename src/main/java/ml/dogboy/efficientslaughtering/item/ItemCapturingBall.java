@@ -80,6 +80,10 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
             ResourceLocation id = this.getCapturedEntity(stack);
             if (id != null) {
                 String name = EntityList.getTranslationName(id);
+                String customName = stack.getTagCompound().getCompoundTag("CapturedEntity").getString("CustomName");
+                if (!customName.isEmpty()) {
+                    name = customName + " (" + name + ")";
+                }
 
                 tooltip.add(I18n.format("tooltip.efficientslaughtering.captured_entity", name));
             }

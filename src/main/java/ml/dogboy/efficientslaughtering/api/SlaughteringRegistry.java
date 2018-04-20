@@ -19,14 +19,18 @@
 package ml.dogboy.efficientslaughtering.api;
 
 import com.google.common.collect.ImmutableSet;
-import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntityLivingBase;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class SlaughteringRegistry {
 
-    private static final Map<Class<? extends EntityLiving>, String> nameCache = new HashMap<>();
-    private static String getName(Class<? extends EntityLiving> entity) {
+    private static final Map<Class<? extends EntityLivingBase>, String> nameCache = new HashMap<>();
+    private static String getName(Class<? extends EntityLivingBase> entity) {
         if (!SlaughteringRegistry.nameCache.containsKey(entity)) {
             SlaughteringRegistry.nameCache.put(entity, entity.getCanonicalName());
         }
@@ -38,11 +42,11 @@ public class SlaughteringRegistry {
     private static final Map<String, Set<String>> preciseStrippedTags = new HashMap<>();
     private static final Set<String> globalPreciseStrippedTags = new HashSet<>();
 
-    public static void addToBlacklist(Class<? extends EntityLiving> entity) {
+    public static void addToBlacklist(Class<? extends EntityLivingBase> entity) {
         SlaughteringRegistry.blacklist.add(SlaughteringRegistry.getName(entity));
     }
 
-    public static void stripNbtTag(Class<? extends EntityLiving> entity, String tagMatcher) {
+    public static void stripNbtTag(Class<? extends EntityLivingBase> entity, String tagMatcher) {
         String key = SlaughteringRegistry.getName(entity);
 
         if (!SlaughteringRegistry.preciseStrippedTags.containsKey(key)) {
@@ -56,15 +60,15 @@ public class SlaughteringRegistry {
         SlaughteringRegistry.globalPreciseStrippedTags.add(tagMatcher);
     }
 
-    public static boolean isBlacklisted(Class<? extends EntityLiving> entity) {
+    public static boolean isBlacklisted(Class<? extends EntityLivingBase> entity) {
         return SlaughteringRegistry.blacklist.contains(SlaughteringRegistry.getName(entity));
     }
 
-    public static boolean isBlacklisted(EntityLiving entityLiving) {
+    public static boolean isBlacklisted(EntityLivingBase entityLiving) {
         return SlaughteringRegistry.isBlacklisted(entityLiving.getClass());
     }
 
-    public static Set<String> getStrippedTags(Class<? extends EntityLiving> entity) {
+    public static Set<String> getStrippedTags(Class<? extends EntityLivingBase> entity) {
         return ImmutableSet.<String>builder()
                 .addAll(SlaughteringRegistry.preciseStrippedTags.getOrDefault(SlaughteringRegistry.getName(entity),
                         Collections.emptySet()))
