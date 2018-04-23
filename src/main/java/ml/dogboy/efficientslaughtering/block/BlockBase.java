@@ -16,27 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ml.dogboy.efficientslaughtering.proxy;
+package ml.dogboy.efficientslaughtering.block;
 
-import net.minecraft.world.World;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import ml.dogboy.efficientslaughtering.EfficientSlaughtering;
+import ml.dogboy.efficientslaughtering.Reference;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.MapColor;
+import net.minecraft.block.material.Material;
+import net.minecraft.util.ResourceLocation;
 
-public class CommonProxy {
+public class BlockBase extends Block {
 
-    public void onPreInit() {
-
-    }
-
-    public void onInit() {
-
-    }
-
-    public void onPostInit() {
-
-    }
-
-    public World getWorld() {
-        return FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(0);
+    public BlockBase(String name, Material blockMaterialIn, MapColor blockMapColorIn) {
+        super(blockMaterialIn, blockMapColorIn);
+        this.setUnlocalizedName(Reference.MODID + "." + name);
+        this.setRegistryName(new ResourceLocation(Reference.MODID, name));
+        this.setCreativeTab(EfficientSlaughtering.tab);
     }
 
 }

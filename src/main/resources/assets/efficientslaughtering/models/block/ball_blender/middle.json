@@ -1,0 +1,8 @@
+{
+  "parent": "efficientslaughtering:block/ball_blender/ball_blender",
+  "textures": {
+    "side": "efficientslaughtering:blocks/ball_blender/middle/side",
+    "up": "efficientslaughtering:blocks/ball_blender/middle/up",
+    "down": "efficientslaughtering:blocks/ball_blender/middle/down"
+  }
+}

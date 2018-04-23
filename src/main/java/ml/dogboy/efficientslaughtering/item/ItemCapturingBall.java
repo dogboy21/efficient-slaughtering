@@ -18,6 +18,13 @@
 
 package ml.dogboy.efficientslaughtering.item;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import ml.dogboy.efficientslaughtering.EfficientSlaughtering;
+import ml.dogboy.efficientslaughtering.Registry;
+import ml.dogboy.efficientslaughtering.api.SlaughteringRegistry;
 import ml.dogboy.efficientslaughtering.client.ClientUtils;
 import ml.dogboy.efficientslaughtering.entity.EntityCapturingBall;
 import net.minecraft.client.renderer.color.IItemColor;
@@ -25,16 +32,21 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.registry.EntityEntry;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import scala.actors.threadpool.Arrays;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -54,19 +66,66 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
         this.setMaxStackSize(1);
     }
 
+    public static ItemStack getForEntity(ResourceLocation entityId) {
+        NBTTagCompound entityTag = new NBTTagCompound();
+        entityTag.setString("id", entityId.toString());
+
+        NBTTagCompound itemTag = new NBTTagCompound();
+        itemTag.setTag("CapturedEntity", entityTag);
+
+        ItemStack itemStack = new ItemStack(Registry.CAPTURING_BALL, 1, 0);
+        itemStack.setTagCompound(itemTag);
+
+        return itemStack;
+    }
+
     @Override
     public String getUnlocalizedName(ItemStack stack) {
         int meta = stack.getMetadata();
         return super.getUnlocalizedName() + "." + meta;
     }
 
-    public boolean hasCapturedEntity(ItemStack stack) {
+    public static boolean hasCapturedEntity(ItemStack stack) {
         return stack.hasTagCompound() && stack.getTagCompound().hasKey("CapturedEntity");
     }
 
     @Nullable
-    public ResourceLocation getCapturedEntity(ItemStack stack) {
-        if (!this.hasCapturedEntity(stack)) {
+    public static NBTTagCompound getEntityTag(ItemStack stack) {
+        if (!ItemCapturingBall.hasCapturedEntity(stack)) {
+            return null;
+        }
+
+        return stack.getTagCompound().getCompoundTag("CapturedEntity");
+    }
+
+    @Nullable
+    public static NBTTagCompound stripEntityTag(ItemStack stack) {
+        NBTTagCompound original = ItemCapturingBall.getEntityTag(stack);
+        if (original == null) {
+            return null;
+        }
+
+        if (stack.getMetadata() == 0) {
+            NBTTagCompound compound = new NBTTagCompound();
+            compound.setString("id", original.getString("id"));
+            return compound;
+        } else {
+            NBTTagCompound compound = original.copy();
+            ResourceLocation id = new ResourceLocation(original.getString("id"));
+            EntityEntry entry = ForgeRegistries.ENTITIES.getValue(id);
+            EntityLivingBase entity = (EntityLivingBase) entry.newInstance(EfficientSlaughtering.getProxy().getWorld());
+
+            for (String tagName : SlaughteringRegistry.getStrippedTags(entity.getClass())) {
+                compound.removeTag(tagName);
+            }
+
+            return compound;
+        }
+    }
+
+    @Nullable
+    public static ResourceLocation getCapturedEntity(ItemStack stack) {
+        if (!ItemCapturingBall.hasCapturedEntity(stack)) {
             return null;
         }
 
@@ -76,8 +135,8 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
     @Override
     @SideOnly(Side.CLIENT)
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-        if (this.hasCapturedEntity(stack)) {
-            ResourceLocation id = this.getCapturedEntity(stack);
+        if (ItemCapturingBall.hasCapturedEntity(stack)) {
+            ResourceLocation id = ItemCapturingBall.getCapturedEntity(stack);
             if (id != null) {
                 String name = EntityList.getTranslationName(id);
                 String customName = stack.getTagCompound().getCompoundTag("CapturedEntity").getString("CustomName");
@@ -87,6 +146,11 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
 
                 tooltip.add(I18n.format("tooltip.efficientslaughtering.captured_entity", name));
             }
+
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            JsonObject jsonObject = gson.fromJson(stripEntityTag(stack).toString(), JsonElement.class).getAsJsonObject();
+            String[] lines = gson.toJson(jsonObject).split("\n");
+            tooltip.addAll(Arrays.asList(lines));
         } else {
             tooltip.add(I18n.format("tooltip.efficientslaughtering.no_captured_entity"));
         }
@@ -98,13 +162,19 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
             items.add(new ItemStack(this, 1, 0));
             items.add(new ItemStack(this, 1, 1));
         }
+
+        if (this.isInMobTab(tab)) {
+            for (ResourceLocation entityId : EntityList.ENTITY_EGGS.keySet()) {
+                items.add(ItemCapturingBall.getForEntity(entityId));
+            }
+        }
     }
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
         ItemStack stack = playerIn.getHeldItem(handIn);
 
-        if (this.hasCapturedEntity(stack)) {
+        if (ItemCapturingBall.hasCapturedEntity(stack)) {
             return new ActionResult<>(EnumActionResult.FAIL, stack);
         }
 
@@ -122,8 +192,8 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
     @Override
     @SideOnly(Side.CLIENT)
     public int colorMultiplier(ItemStack stack, int tintIndex) {
-        if (this.hasCapturedEntity(stack)) {
-            ResourceLocation entity = this.getCapturedEntity(stack);
+        if (ItemCapturingBall.hasCapturedEntity(stack)) {
+            ResourceLocation entity = ItemCapturingBall.getCapturedEntity(stack);
             if (entity != null) {
                 EntityList.EntityEggInfo eggInfo = EntityList.ENTITY_EGGS.get(entity);
 
@@ -146,6 +216,10 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
         }
 
         return 0;
+    }
+
+    private boolean isInMobTab(CreativeTabs targetTab) {
+        return EfficientSlaughtering.mobTab == targetTab;
     }
 
 }

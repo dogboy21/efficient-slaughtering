@@ -1,13 +1,13 @@
 ﻿{
   "credit": "Made with Blockbench",
   "textures": {
-    "center_top_bottom": "efficientslaughtering:items/capturing_ball_tbc",
-    "center_front_back": "efficientslaughtering:items/capturing_ball_fbc",
-    "center_left_right": "efficientslaughtering:items/capturing_ball_lrc",
+    "center_top_bottom": "efficientslaughtering:items/capturing_ball/top_bottom_center",
+    "center_front_back": "efficientslaughtering:items/capturing_ball/front_back_center",
+    "center_left_right": "efficientslaughtering:items/capturing_ball/left_right_center",
 
-    "base": "efficientslaughtering:items/capturing_ball_base",
-    "top_bottom": "efficientslaughtering:items/capturing_ball_tb",
-    "middle": "efficientslaughtering:items/capturing_ball_middle"
+    "base": "efficientslaughtering:items/capturing_ball/base",
+    "top_bottom": "efficientslaughtering:items/capturing_ball/top_bottom",
+    "middle": "efficientslaughtering:items/capturing_ball/middle"
   },
   "elements": [
     {

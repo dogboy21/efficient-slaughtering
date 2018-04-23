@@ -18,11 +18,16 @@
 
 package ml.dogboy.efficientslaughtering;
 
+import ml.dogboy.efficientslaughtering.block.BlockBallBlender;
 import ml.dogboy.efficientslaughtering.entity.EntityCapturingBall;
 import ml.dogboy.efficientslaughtering.item.ItemCapturingBall;
+import ml.dogboy.efficientslaughtering.item.ItemSpawningCore;
+import ml.dogboy.efficientslaughtering.tileentity.TileBallBlender;
 import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -36,19 +41,27 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 public class Registry {
 
     public static final Item CAPTURING_BALL = Items.AIR;
+    public static final Item SPAWNING_CORE = Items.AIR;
+    public static Item BALL_BLENDER_ITEM = Items.AIR;
+
+    public static final Block BALL_BLENDER = Blocks.AIR;
 
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         event.getRegistry().registerAll(
-                new ItemCapturingBall()
+                new ItemCapturingBall(),
+                BALL_BLENDER_ITEM = new ItemBlock(BALL_BLENDER).setRegistryName(BALL_BLENDER.getRegistryName()),
+                new ItemSpawningCore()
         );
     }
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         event.getRegistry().registerAll(
-
+                new BlockBallBlender()
         );
+
+        GameRegistry.registerTileEntity(TileBallBlender.class, Reference.MODID + ":ball_blender");
     }
 
     @SubscribeEvent

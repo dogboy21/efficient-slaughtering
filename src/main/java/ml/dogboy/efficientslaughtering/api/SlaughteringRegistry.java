@@ -76,4 +76,13 @@ public class SlaughteringRegistry {
                 .build();
     }
 
+    static {
+        stripNbtTag("Attributes");
+        stripNbtTag("HandItems");
+        stripNbtTag("ArmorItems");
+        stripNbtTag("HurtTime");
+        stripNbtTag("ArmorDropChances");
+        stripNbtTag("HandDropChances");
+    }
+
 }

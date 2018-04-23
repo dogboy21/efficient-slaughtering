@@ -16,27 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package ml.dogboy.efficientslaughtering.proxy;
+package ml.dogboy.efficientslaughtering.network;
 
-import net.minecraft.world.World;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import ml.dogboy.efficientslaughtering.Reference;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 
-public class CommonProxy {
+public class ESPacketHandler {
 
-    public void onPreInit() {
-
-    }
-
-    public void onInit() {
-
-    }
-
-    public void onPostInit() {
-
-    }
-
-    public World getWorld() {
-        return FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(0);
-    }
+    public static final SimpleNetworkWrapper INSTANCE = NetworkRegistry.INSTANCE.newSimpleChannel(Reference.MODID);
 
 }

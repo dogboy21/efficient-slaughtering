@@ -1,7 +1,11 @@
 itemGroup.efficientslaughtering=Efficient Slaughtering
+itemGroup.efficientslaughtering_mobs=Mob Capturing Balls
 
 item.efficientslaughtering.capturing_ball.0.name=Mob Capturing Ball
 item.efficientslaughtering.capturing_ball.1.name=Mob Capturing Ball (Precise)
+item.efficientslaughtering.spawning_core.name=Spawning Core
+
+tile.efficientslaughtering.ball_blender.name=Capturing Ball Blender
 
 entity.thrown_capturing_ball.name=Capturing Ball
 

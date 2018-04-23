@@ -18,9 +18,11 @@
 
 package ml.dogboy.efficientslaughtering;
 
+import ml.dogboy.efficientslaughtering.item.ItemCapturingBall;
 import ml.dogboy.efficientslaughtering.proxy.CommonProxy;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -44,6 +46,13 @@ public class EfficientSlaughtering {
         @Override
         public ItemStack getTabIconItem() {
             return new ItemStack(Registry.CAPTURING_BALL);
+        }
+    };
+
+    public static final CreativeTabs mobTab = new CreativeTabs(Reference.MODID + "_mobs") {
+        @Override
+        public ItemStack getTabIconItem() {
+            return ItemCapturingBall.getForEntity(new ResourceLocation("minecraft", "zombie"));
         }
     };
 
