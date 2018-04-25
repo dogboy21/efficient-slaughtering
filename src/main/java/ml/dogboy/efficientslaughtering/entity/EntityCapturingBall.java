@@ -55,20 +55,8 @@ public class EntityCapturingBall extends EntityThrowable {
             ResourceLocation key = EntityList.getKey(hit);
 
             if (!SlaughteringRegistry.isBlacklisted(hit) && key != null) {
-                NBTTagCompound nbt = new NBTTagCompound();
-                hit.writeEntityToNBT(nbt);
-                nbt.setString("id", key.toString());
-
-                if (hit.hasCustomName()) {
-                    nbt.setString("CustomName", hit.getCustomNameTag());
-                }
-                if (hit.getAlwaysRenderNameTag()) {
-                    nbt.setBoolean("CustomNameVisible", hit.getAlwaysRenderNameTag());
-                }
-
                 NBTTagCompound itemData = new NBTTagCompound();
-                itemData.setTag("CapturedEntity", nbt);
-
+                itemData.setString("CapturedEntity", key.toString());
 
                 stack.setTagCompound(itemData);
                 hit.setDead();

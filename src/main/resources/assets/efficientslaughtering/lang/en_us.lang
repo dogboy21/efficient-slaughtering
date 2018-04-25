@@ -1,9 +1,14 @@
 itemGroup.efficientslaughtering=Efficient Slaughtering
-itemGroup.efficientslaughtering_mobs=Mob Capturing Balls
+itemGroup.efficientslaughtering_mobs=Efficient Slaughtering Mobs
 
-item.efficientslaughtering.capturing_ball.0.name=Mob Capturing Ball
-item.efficientslaughtering.capturing_ball.1.name=Mob Capturing Ball (Precise)
+item.efficientslaughtering.capturing_ball.name=Mob Capturing Ball
 item.efficientslaughtering.spawning_core.name=Spawning Core
+
+item.efficientslaughtering.spawner_upgrade.speed.name=Spawner Upgrade - Speed
+item.efficientslaughtering.spawner_upgrade.efficiency.name=Spawner Upgrade - Efficiency
+item.efficientslaughtering.spawner_upgrade.looting.name=Spawner Upgrade - Looting
+item.efficientslaughtering.spawner_upgrade.player.name=Spawner Upgrade - Fake Player
+item.efficientslaughtering.spawner_upgrade.player.name=Spawner Upgrade - Beheading
 
 tile.efficientslaughtering.ball_blender.name=Capturing Ball Blender
 
@@ -11,3 +16,9 @@ entity.thrown_capturing_ball.name=Capturing Ball
 
 tooltip.efficientslaughtering.no_captured_entity=No Entity captured
 tooltip.efficientslaughtering.captured_entity=Contains %s
+
+tooltip.efficientslaughtering.spawner_upgrade.speed=Boosts the production speed of spawners
+tooltip.efficientslaughtering.spawner_upgrade.efficiency=Improves the efficiency of spawners
+tooltip.efficientslaughtering.spawner_upgrade.looting=Gives one level of looting per upgrade
+tooltip.efficientslaughtering.spawner_upgrade.player=Allows spawners to obtain player-kill-only items
+tooltip.efficientslaughtering.spawner_upgrade.beheading=Increases the drop chance of heads

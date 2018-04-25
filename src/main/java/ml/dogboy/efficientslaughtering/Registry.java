@@ -19,10 +19,15 @@
 package ml.dogboy.efficientslaughtering;
 
 import ml.dogboy.efficientslaughtering.block.BlockBallBlender;
+import ml.dogboy.efficientslaughtering.block.BlockSpawner;
+import ml.dogboy.efficientslaughtering.block.BlockSpawnerBase;
 import ml.dogboy.efficientslaughtering.entity.EntityCapturingBall;
 import ml.dogboy.efficientslaughtering.item.ItemCapturingBall;
+import ml.dogboy.efficientslaughtering.item.ItemSpawnerUpgrade;
 import ml.dogboy.efficientslaughtering.item.ItemSpawningCore;
 import ml.dogboy.efficientslaughtering.tileentity.TileBallBlender;
+import ml.dogboy.efficientslaughtering.tileentity.TileSpawner;
+import ml.dogboy.efficientslaughtering.tileentity.TileSpawnerBase;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -42,26 +47,41 @@ public class Registry {
 
     public static final Item CAPTURING_BALL = Items.AIR;
     public static final Item SPAWNING_CORE = Items.AIR;
-    public static Item BALL_BLENDER_ITEM = Items.AIR;
+    public static final Item SPAWNER_UPGRADE = Items.AIR;
 
     public static final Block BALL_BLENDER = Blocks.AIR;
+    public static final Block SPAWNER = Blocks.AIR;
+    public static final Block SPAWNER_BASE = Blocks.AIR;
+
+    public static Item BALL_BLENDER_ITEM = Items.AIR;
+    public static Item SPAWNER_ITEM = Items.AIR;
+    public static Item SPAWNER_BASE_ITEM = Items.AIR;
 
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         event.getRegistry().registerAll(
                 new ItemCapturingBall(),
+                new ItemSpawningCore(),
+                new ItemSpawnerUpgrade(),
+
+
                 BALL_BLENDER_ITEM = new ItemBlock(BALL_BLENDER).setRegistryName(BALL_BLENDER.getRegistryName()),
-                new ItemSpawningCore()
-        );
+                SPAWNER_ITEM = new ItemBlock(SPAWNER).setRegistryName(SPAWNER.getRegistryName()),
+                SPAWNER_BASE_ITEM = new ItemBlock(SPAWNER_BASE).setRegistryName(SPAWNER_BASE.getRegistryName())
+                );
     }
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         event.getRegistry().registerAll(
-                new BlockBallBlender()
+                new BlockBallBlender(),
+                new BlockSpawner(),
+                new BlockSpawnerBase()
         );
 
         GameRegistry.registerTileEntity(TileBallBlender.class, Reference.MODID + ":ball_blender");
+        GameRegistry.registerTileEntity(TileSpawner.class, Reference.MODID + ":spawner");
+        GameRegistry.registerTileEntity(TileSpawnerBase.class, Reference.MODID + ":spawner_base");
     }
 
     @SubscribeEvent

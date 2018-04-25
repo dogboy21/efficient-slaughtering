@@ -19,6 +19,7 @@
 package ml.dogboy.efficientslaughtering.client.renderer.tileentity;
 
 import ml.dogboy.efficientslaughtering.Registry;
+import ml.dogboy.efficientslaughtering.config.ESConfig;
 import ml.dogboy.efficientslaughtering.tileentity.TileBallBlender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -115,7 +116,7 @@ public class RenderBallBlender extends TileEntitySpecialRenderer<TileBallBlender
 
 
             EntityPlayerSP player = Minecraft.getMinecraft().player;
-            if (player.isSneaking() && Minecraft.isGuiEnabled()) { //TODO Configurable
+            if (Minecraft.isGuiEnabled() && (player.isSneaking() || ESConfig.clientSettings.alwaysShowEnergyHud)) {
                 Vec3d start = player.getPositionEyes(partialTicks);
                 Vec3d lookVec = player.getLook(partialTicks);
                 Vec3d end = start.addVector(lookVec.x * 5, lookVec.y * 5, lookVec.z * 5);

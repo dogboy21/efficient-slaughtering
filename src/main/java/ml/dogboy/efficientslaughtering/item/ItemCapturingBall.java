@@ -18,13 +18,8 @@
 
 package ml.dogboy.efficientslaughtering.item;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import ml.dogboy.efficientslaughtering.EfficientSlaughtering;
 import ml.dogboy.efficientslaughtering.Registry;
-import ml.dogboy.efficientslaughtering.api.SlaughteringRegistry;
 import ml.dogboy.efficientslaughtering.client.ClientUtils;
 import ml.dogboy.efficientslaughtering.entity.EntityCapturingBall;
 import net.minecraft.client.renderer.color.IItemColor;
@@ -32,7 +27,6 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -42,13 +36,10 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.registry.EntityEntry;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
 import java.util.List;
 
 public class ItemCapturingBall extends ItemBase implements IItemColor {
@@ -62,16 +53,12 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
 
     public ItemCapturingBall() {
         super("capturing_ball");
-        this.setHasSubtypes(true);
         this.setMaxStackSize(1);
     }
 
     public static ItemStack getForEntity(ResourceLocation entityId) {
-        NBTTagCompound entityTag = new NBTTagCompound();
-        entityTag.setString("id", entityId.toString());
-
         NBTTagCompound itemTag = new NBTTagCompound();
-        itemTag.setTag("CapturedEntity", entityTag);
+        itemTag.setString("CapturedEntity", entityId.toString());
 
         ItemStack itemStack = new ItemStack(Registry.CAPTURING_BALL, 1, 0);
         itemStack.setTagCompound(itemTag);
@@ -79,48 +66,9 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
         return itemStack;
     }
 
-    @Override
-    public String getUnlocalizedName(ItemStack stack) {
-        int meta = stack.getMetadata();
-        return super.getUnlocalizedName() + "." + meta;
-    }
 
     public static boolean hasCapturedEntity(ItemStack stack) {
         return stack.hasTagCompound() && stack.getTagCompound().hasKey("CapturedEntity");
-    }
-
-    @Nullable
-    public static NBTTagCompound getEntityTag(ItemStack stack) {
-        if (!ItemCapturingBall.hasCapturedEntity(stack)) {
-            return null;
-        }
-
-        return stack.getTagCompound().getCompoundTag("CapturedEntity");
-    }
-
-    @Nullable
-    public static NBTTagCompound stripEntityTag(ItemStack stack) {
-        NBTTagCompound original = ItemCapturingBall.getEntityTag(stack);
-        if (original == null) {
-            return null;
-        }
-
-        if (stack.getMetadata() == 0) {
-            NBTTagCompound compound = new NBTTagCompound();
-            compound.setString("id", original.getString("id"));
-            return compound;
-        } else {
-            NBTTagCompound compound = original.copy();
-            ResourceLocation id = new ResourceLocation(original.getString("id"));
-            EntityEntry entry = ForgeRegistries.ENTITIES.getValue(id);
-            EntityLivingBase entity = (EntityLivingBase) entry.newInstance(EfficientSlaughtering.getProxy().getWorld());
-
-            for (String tagName : SlaughteringRegistry.getStrippedTags(entity.getClass())) {
-                compound.removeTag(tagName);
-            }
-
-            return compound;
-        }
     }
 
     @Nullable
@@ -128,8 +76,12 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
         if (!ItemCapturingBall.hasCapturedEntity(stack)) {
             return null;
         }
+        String id = stack.getTagCompound().getString("CapturedEntity");
+        if (id.isEmpty()) {
+            return null;
+        }
 
-        return new ResourceLocation(stack.getTagCompound().getCompoundTag("CapturedEntity").getString("id"));
+        return new ResourceLocation(id);
     }
 
     @Override
@@ -139,18 +91,8 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
             ResourceLocation id = ItemCapturingBall.getCapturedEntity(stack);
             if (id != null) {
                 String name = EntityList.getTranslationName(id);
-                String customName = stack.getTagCompound().getCompoundTag("CapturedEntity").getString("CustomName");
-                if (!customName.isEmpty()) {
-                    name = customName + " (" + name + ")";
-                }
-
                 tooltip.add(I18n.format("tooltip.efficientslaughtering.captured_entity", name));
             }
-
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            JsonObject jsonObject = gson.fromJson(stripEntityTag(stack).toString(), JsonElement.class).getAsJsonObject();
-            String[] lines = gson.toJson(jsonObject).split("\n");
-            tooltip.addAll(Arrays.asList(lines));
         } else {
             tooltip.add(I18n.format("tooltip.efficientslaughtering.no_captured_entity"));
         }
@@ -163,7 +105,7 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
             items.add(new ItemStack(this, 1, 1));
         }
 
-        if (this.isInMobTab(tab)) {
+        if (EfficientSlaughtering.mobTab == tab) {
             for (ResourceLocation entityId : EntityList.ENTITY_EGGS.keySet()) {
                 items.add(ItemCapturingBall.getForEntity(entityId));
             }
@@ -216,10 +158,6 @@ public class ItemCapturingBall extends ItemBase implements IItemColor {
         }
 
         return 0;
-    }
-
-    private boolean isInMobTab(CreativeTabs targetTab) {
-        return EfficientSlaughtering.mobTab == targetTab;
     }
 
 }

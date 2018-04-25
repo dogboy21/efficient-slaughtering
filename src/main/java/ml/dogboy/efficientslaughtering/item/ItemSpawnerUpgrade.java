@@ -18,15 +18,11 @@
 
 package ml.dogboy.efficientslaughtering.item;
 
-import ml.dogboy.efficientslaughtering.EfficientSlaughtering;
-import ml.dogboy.efficientslaughtering.Registry;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityList;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -34,39 +30,43 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class ItemSpawningCore extends ItemBase {
+public class ItemSpawnerUpgrade extends ItemBase {
 
-    public ItemSpawningCore() {
-        super("spawning_core");
+    public static final String[] UPGRADES = new String[]{"speed", "efficiency", "looting", "player", "beheading"};
+
+    public ItemSpawnerUpgrade() {
+        super("spawner_upgrade");
+        this.setHasSubtypes(true);
         this.setMaxStackSize(1);
+    }
+
+    @Override
+    public String getUnlocalizedName(ItemStack stack) {
+        int meta = stack.getMetadata();
+        if (meta < 0 || meta >= UPGRADES.length) {
+            return super.getUnlocalizedName();
+        }
+        return super.getUnlocalizedName() + "." + UPGRADES[meta];
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-        if (stack.hasTagCompound()) {
-            ResourceLocation entityId = new ResourceLocation(stack.getTagCompound().getString("CapturedEntity"));
-            String name = EntityList.getTranslationName(entityId);
-            tooltip.add(name);
+        int meta = stack.getMetadata();
+        if (meta < 0 || meta >= UPGRADES.length) {
+            return;
         }
-    }
 
-    public static ItemStack getForEntity(ResourceLocation entityId) {
-        NBTTagCompound itemTag = new NBTTagCompound();
-        itemTag.setString("CapturedEntity", entityId.toString());
-
-        ItemStack itemStack = new ItemStack(Registry.SPAWNING_CORE, 1, 0);
-        itemStack.setTagCompound(itemTag);
-
-        return itemStack;
+        tooltip.add(I18n.format("tooltip.efficientslaughtering.spawner_upgrade." + UPGRADES[meta]));
     }
 
     @Override
     public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items) {
-        if (EfficientSlaughtering.mobTab == tab) {
-            for (ResourceLocation entityId : EntityList.ENTITY_EGGS.keySet()) {
-                items.add(ItemSpawningCore.getForEntity(entityId));
+        if (this.isInCreativeTab(tab)) {
+            for (int i = 0; i < UPGRADES.length; i++) {
+                items.add(new ItemStack(this, 1, i));
             }
         }
     }
+
 }

@@ -1,0 +1,15 @@
+{
+  "variants": {
+    "normal": {
+      "model": "efficientslaughtering:spawner"
+    },
+
+    "upper=false": {
+      "model": "efficientslaughtering:spawner"
+    },
+    "upper=true": {
+      "model": "efficientslaughtering:spawner",
+      "x": 180
+    }
+  }
+}

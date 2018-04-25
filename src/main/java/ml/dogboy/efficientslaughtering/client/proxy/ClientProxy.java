@@ -22,9 +22,13 @@ import ml.dogboy.efficientslaughtering.Reference;
 import ml.dogboy.efficientslaughtering.Registry;
 import ml.dogboy.efficientslaughtering.client.renderer.RenderCapturingBall;
 import ml.dogboy.efficientslaughtering.client.renderer.tileentity.RenderBallBlender;
+import ml.dogboy.efficientslaughtering.client.renderer.tileentity.RenderSpawner;
+import ml.dogboy.efficientslaughtering.client.renderer.tileentity.RenderSpawnerBase;
 import ml.dogboy.efficientslaughtering.entity.EntityCapturingBall;
 import ml.dogboy.efficientslaughtering.proxy.CommonProxy;
 import ml.dogboy.efficientslaughtering.tileentity.TileBallBlender;
+import ml.dogboy.efficientslaughtering.tileentity.TileSpawner;
+import ml.dogboy.efficientslaughtering.tileentity.TileSpawnerBase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.color.IItemColor;
@@ -54,6 +58,8 @@ public class ClientProxy extends CommonProxy {
     public void onInit() {
         Minecraft.getMinecraft().getItemColors().registerItemColorHandler((IItemColor) Registry.CAPTURING_BALL, Registry.CAPTURING_BALL);
         ClientRegistry.bindTileEntitySpecialRenderer(TileBallBlender.class, new RenderBallBlender());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileSpawner.class, new RenderSpawner());
+        ClientRegistry.bindTileEntitySpecialRenderer(TileSpawnerBase.class, new RenderSpawnerBase());
     }
 
     @SubscribeEvent
@@ -73,4 +79,5 @@ public class ClientProxy extends CommonProxy {
     public World getWorld() {
         return Minecraft.getMinecraft().world;
     }
+
 }

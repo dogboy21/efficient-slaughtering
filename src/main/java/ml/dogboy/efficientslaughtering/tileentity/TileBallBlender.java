@@ -18,16 +18,19 @@
 
 package ml.dogboy.efficientslaughtering.tileentity;
 
+import assets.efficientslaughtering.utilities.DirectionHelper;
 import ml.dogboy.efficientslaughtering.Registry;
+import ml.dogboy.efficientslaughtering.config.ESConfig;
 import ml.dogboy.efficientslaughtering.item.ItemCapturingBall;
-import net.minecraft.block.state.IBlockState;
+import ml.dogboy.efficientslaughtering.item.ItemSpawningCore;
+import ml.dogboy.efficientslaughtering.tileentity.base.PersistantSyncableTileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.common.capabilities.Capability;
@@ -41,44 +44,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TileBallBlender extends TileEntity implements ITickable, IEnergyStorage, IItemHandler {
-
-    private static final int MAX_ENERGY = 1000000;
-    private static final int WORK_TICKS = 60 * 20;
-    private static final int ENERGY_DRAW = 1000;
-
-    private static final Vec3i[] DIRECTIONS = new Vec3i[]{
-            new Vec3i(1, 0, 0),
-            new Vec3i(-1, 0, 0),
-            new Vec3i(0, 0, 1),
-            new Vec3i(0, 0, -1),
-            new Vec3i(1, 0, 1),
-            new Vec3i(1, 0, -1),
-            new Vec3i(-1, 0, 1),
-            new Vec3i(-1, 0, -1)
-    };
-
-    private static final Vec3i[] INVALID_DIRECTIONS = new Vec3i[]{
-            new Vec3i(-2, 0, -2),
-            new Vec3i(-2, 0, -1),
-            new Vec3i(-2, 0, 0),
-            new Vec3i(-2, 0, 1),
-            new Vec3i(-2, 0, 2),
-
-            new Vec3i(2, 0, -2),
-            new Vec3i(2, 0, -1),
-            new Vec3i(2, 0, 0),
-            new Vec3i(2, 0, 1),
-            new Vec3i(2, 0, 2),
-
-            new Vec3i(-1, 0, -2),
-            new Vec3i(0, 0, -2),
-            new Vec3i(1, 0, -2),
-
-            new Vec3i(-1, 0, 2),
-            new Vec3i(0, 0, 2),
-            new Vec3i(1, 0, 2)
-    };
+public class TileBallBlender extends PersistantSyncableTileEntity implements ITickable, IEnergyStorage, IItemHandler {
 
     private boolean isMaster;
     private BlockPos master;
@@ -126,25 +92,20 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
         if (this.isMaster && !this.world.isRemote) {
             if (this.progress == -1) {
                 if (this.canStartProgress()) {
-                    this.progress = WORK_TICKS;
+                    this.progress = ESConfig.ballBlenderWorkTicks;
                     this.triggerUpdate();
                 }
             }
 
-            if (this.progress > 0 && this.storedEnergy >= ENERGY_DRAW) {
-                this.storedEnergy -= ENERGY_DRAW;
+            if (this.progress > 0 && this.storedEnergy >= ESConfig.ballBlenderEnergyDraw) {
+                this.storedEnergy -= ESConfig.ballBlenderEnergyDraw;
                 this.progress--;
                 if (this.progress == 0) {
-                    NBTTagCompound entity = this.items[0].getTagCompound().getCompoundTag("CapturedEntity");
-
                     for (int i = 0; i < 8; i++) {
                         this.items[i] = ItemStack.EMPTY;
                     }
 
-                    NBTTagCompound targetTag = new NBTTagCompound();
-                    targetTag.setTag("CapturedEntity", entity);
-                    ItemStack targetItem = new ItemStack(Registry.SPAWNING_CORE, 1);
-                    targetItem.setTagCompound(targetTag);
+                    ItemStack targetItem = ItemSpawningCore.getForEntity(ItemCapturingBall.getCapturedEntity(this.items[0]));
                     this.items[8] = targetItem;
 
                     this.progress = -1;
@@ -163,8 +124,7 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
             return false;
         }
 
-        boolean precise = false;
-        NBTTagCompound capturedEntity = null;
+        ResourceLocation capturedEntity = null;
         for (int i = 0; i < 8; i++) {
             ItemStack itemStack = this.items[i];
             if (itemStack.isEmpty()) {
@@ -176,17 +136,12 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
             }
 
             if (i == 0) {
-                precise = itemStack.getMetadata() == 1;
-                capturedEntity = ItemCapturingBall.stripEntityTag(itemStack);
+                capturedEntity = ItemCapturingBall.getCapturedEntity(itemStack);
                 if (capturedEntity == null) {
                     return false;
                 }
             } else {
-                if (precise != (itemStack.getMetadata() == 1)) {
-                    return false;
-                }
-
-                if (!capturedEntity.equals(ItemCapturingBall.stripEntityTag(itemStack))) {
+                if (!capturedEntity.equals(ItemCapturingBall.getCapturedEntity(itemStack))) {
                     return false;
                 }
             }
@@ -199,17 +154,17 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
         return this.progress;
     }
 
-    private void triggerUpdate() {
-        IBlockState blockState = this.world.getBlockState(this.pos);
-        this.world.notifyBlockUpdate(this.pos, blockState, blockState, 2);
-        this.markDirty();
+    @Override
+    public AxisAlignedBB getRenderBoundingBox() {
+        BlockPos pos = this.getPos();
+        return new AxisAlignedBB(pos.getX() - 1, pos.getY(), pos.getZ() - 1, pos.getX() + 1, pos.getY(), pos.getZ() + 1);
     }
 
     // ==================== Mutliblock Handling ====================
 
     private List<TileBallBlender> getSlaves() {
         List<TileBallBlender> tileEntities = new ArrayList<>();
-        for (Vec3i direction : DIRECTIONS) {
+        for (Vec3i direction : DirectionHelper.ALL_AROUND) {
             BlockPos pos = this.pos.add(direction);
             TileEntity tileEntity = this.world.getTileEntity(pos);
             if (tileEntity instanceof TileBallBlender) {
@@ -221,7 +176,7 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
     }
 
     private void tryFormMultiBlock() {
-        for (Vec3i direction : INVALID_DIRECTIONS) {
+        for (Vec3i direction : DirectionHelper.ALL_AROUND_PLUS_ONE) {
             if (this.world.getTileEntity(this.pos.add(direction)) instanceof TileBallBlender) {
                 return;
             }
@@ -243,7 +198,7 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
     }
 
     private boolean checkMultiBlockIntegrity() {
-        for (Vec3i direction : INVALID_DIRECTIONS) {
+        for (Vec3i direction : DirectionHelper.ALL_AROUND_PLUS_ONE) {
             if (this.world.getTileEntity(this.pos.add(direction)) instanceof TileBallBlender) {
                 return false;
             }
@@ -299,7 +254,7 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
     @Override
     @SuppressWarnings("unchecked")
     public <T> T getCapability(Capability<T> capability, @Nullable EnumFacing facing) {
-        if (facing == null || facing != EnumFacing.DOWN) {
+        if (facing == null || facing == EnumFacing.UP) {
             return super.getCapability(capability, facing);
         }
 
@@ -320,7 +275,7 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
 
     @Override
     public boolean hasCapability(Capability<?> capability, @Nullable EnumFacing facing) {
-        if (facing == null || facing != EnumFacing.DOWN) {
+        if (facing == null || facing == EnumFacing.UP) {
             return super.hasCapability(capability, facing);
         }
 
@@ -352,7 +307,7 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
     @Override
     public int receiveEnergy(int maxReceive, boolean simulate) {
         if (this.isMaster) {
-            int receiveable = Math.min(maxReceive, MAX_ENERGY - this.storedEnergy);
+            int receiveable = Math.min(maxReceive, ESConfig.ballBlenderEnergyCapacity - this.storedEnergy);
             if (!simulate) {
                 this.storedEnergy += receiveable;
                 this.triggerUpdate();
@@ -396,7 +351,7 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
     @Override
     public int getMaxEnergyStored() {
         if (this.isMaster) {
-            return MAX_ENERGY;
+            return ESConfig.ballBlenderEnergyCapacity;
         }
 
         TileBallBlender master = this.getMaster();
@@ -516,13 +471,10 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
 
     // ==================== Persistence and Synchronization ====================
 
-
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound compound) {
-        super.writeToNBT(compound);
-
-        compound.setInteger("StoredEnergy", this.storedEnergy);
-        compound.setInteger("Progress", this.progress);
+    public void writeData(NBTTagCompound tagCompound) {
+        tagCompound.setInteger("StoredEnergy", this.storedEnergy);
+        tagCompound.setInteger("Progress", this.progress);
 
         NBTTagCompound itemList = new NBTTagCompound();
 
@@ -535,19 +487,15 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
             }
         }
 
-        compound.setTag("Items", itemList);
-
-        return compound;
+        tagCompound.setTag("Items", itemList);
     }
 
     @Override
-    public void readFromNBT(NBTTagCompound compound) {
-        super.readFromNBT(compound);
+    public void readData(NBTTagCompound tagCompound) {
+        this.storedEnergy = tagCompound.getInteger("StoredEnergy");
+        this.progress = tagCompound.getInteger("Progress");
 
-        this.storedEnergy = compound.getInteger("StoredEnergy");
-        this.progress = compound.getInteger("Progress");
-
-        NBTTagCompound itemList = compound.getCompoundTag("Items");
+        NBTTagCompound itemList = tagCompound.getCompoundTag("Items");
 
         for (int i = 0; i < this.items.length; i++) {
             if (itemList.hasKey("Slot" + i)) {
@@ -556,27 +504,6 @@ public class TileBallBlender extends TileEntity implements ITickable, IEnergySto
                 this.items[i] = ItemStack.EMPTY;
             }
         }
-    }
-
-    @Override
-    public NBTTagCompound getUpdateTag() {
-        return this.writeToNBT(new NBTTagCompound());
-    }
-
-    @Override
-    public void handleUpdateTag(NBTTagCompound tag) {
-        this.readFromNBT(tag);
-    }
-
-    @Override
-    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
-        this.handleUpdateTag(pkt.getNbtCompound());
-    }
-
-    @Nullable
-    @Override
-    public SPacketUpdateTileEntity getUpdatePacket() {
-        return new SPacketUpdateTileEntity(this.pos, -1, this.getUpdateTag());
     }
 
 }
