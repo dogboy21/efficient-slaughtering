@@ -34,40 +34,87 @@ public class ESConfig {
     @Config.Comment("Client-side settings")
     public static ClientSettings clientSettings = new ClientSettings();
 
-    @Config.Comment("The internal energy capacity of a Ball Blender")
-    @Config.RangeInt(min = 1000)
-    public static int ballBlenderEnergyCapacity = 1000000;
 
-    @Config.Comment("How much energy the Ball Blender drains per work tick")
-    @Config.RangeInt(min = 10)
-    public static int ballBlenderEnergyDraw = 1000;
+    public static class BallBlenderSettings {
 
-    @Config.Comment("How long does the Ball Blender take to produce a Spawning Core")
-    @Config.RangeInt(min = 10)
-    public static int ballBlenderWorkTicks = 1200;
+        @Config.Comment("The internal energy capacity of a Ball Blender")
+        @Config.RangeInt(min = 1000)
+        public int ballBlenderEnergyCapacity = 1000000;
 
-    @Config.RangeInt(min = 3)
-    @Config.Comment("The max distance between the upper and lower parts of a spawner")
-    public static int maxSpawnerPlateDistance = 10;
+        @Config.Comment("How much energy the Ball Blender drains per work tick")
+        @Config.RangeInt(min = 10)
+        public int ballBlenderEnergyDraw = 1000;
 
-    @Config.Comment("How much energy the Spawner drains per killed mob")
-    @Config.RangeInt(min = 1000)
-    public static int spawnerBaseEnergyDraw = 200000;
+        @Config.Comment("How long does the Ball Blender take to produce a Spawning Core")
+        @Config.RangeInt(min = 10)
+        public int ballBlenderWorkTicks = 1200;
 
-    @Config.Comment("How long does the Spawner take to kill a mob")
-    @Config.RangeInt(min = 10)
-    public static int spawnerBaseWorkTicks = 30;
+    }
 
-    @Config.RangeDouble(min = 0.01, max = 0.99)
-    @Config.Comment("How much energy cost should be removed by an efficiency upgrade")
-    public static double efficiencyUpgradeBonus = 0.1;
+    @Config.Comment("Capturing Ball Blender settings")
+    public static BallBlenderSettings ballBlenderSettings = new BallBlenderSettings();
 
-    @Config.RangeDouble(min = 0.01, max = 0.99)
-    @Config.Comment("How much work ticks should be removed by an speed upgrade")
-    public static double speedUpgradeBonus = 0.1;
 
-    @Config.RangeInt(min = 1)
-    @Config.Comment("The chance of a head drop is (Number of beheading upgrades) in this number")
-    public static int beheadingChance = 10;
+    public static class SpawnerSettings {
+
+        @Config.RangeInt(min = 3)
+        @Config.Comment("The max distance between the upper and lower parts of a spawner")
+        public int maxSpawnerPlateDistance = 10;
+
+        @Config.Comment("How much energy the Spawner drains per killed mob")
+        @Config.RangeInt(min = 1000)
+        public int spawnerBaseEnergyDraw = 200000;
+
+        @Config.Comment("How long does the Spawner take to kill a mob")
+        @Config.RangeInt(min = 10)
+        public int spawnerBaseWorkTicks = 30;
+
+        public static class SpawnerUpgrades {
+
+            @Config.RangeDouble(min = 0.01, max = 0.99)
+            @Config.Comment("How much energy cost should be removed by an efficiency upgrade")
+            public double efficiencyUpgradeBonus = 0.1;
+
+            @Config.RangeDouble(min = 0.01, max = 0.99)
+            @Config.Comment("How much work ticks should be removed by an speed upgrade")
+            public double speedUpgradeBonus = 0.1;
+
+            @Config.RangeInt(min = 1)
+            @Config.Comment("The chance of a head drop is (Number of beheading upgrades) in this number")
+            public int beheadingChance = 10;
+
+
+            @Config.RangeInt(min = 0, max = 10)
+            @Config.Comment("The energy cost of one beheading upgrade")
+            public double beheadingEnergyCost = 0.08;
+
+            @Config.RangeInt(min = 0, max = 10)
+            @Config.Comment("The energy cost of one speed upgrade")
+            public double speedEnergyCost = 0.05;
+
+            @Config.RangeInt(min = 0, max = 10)
+            @Config.Comment("The energy cost of one looting upgrade")
+            public double lootingEnergyCost = 0.05;
+
+            @Config.RangeInt(min = 0, max = 10)
+            @Config.Comment("The energy cost of the fakeplayer upgrade")
+            public double fakeplayerEnergyCost = 0.1;
+
+        }
+
+        @Config.Comment("Spawner upgrade settings")
+        public SpawnerUpgrades spawnerUpgrades = new SpawnerUpgrades();
+
+        @Config.Comment("Are boss mobs allowed to be spawned")
+        public boolean allowBoss = true;
+
+        @Config.RangeInt(min = 0, max = 10)
+        @Config.Comment("The additional energy cost when a boss is spawned")
+        public double bossEnergyFactor = 0.5;
+
+    }
+
+    @Config.Comment("Spawner settings")
+    public static SpawnerSettings spawnerSettings = new SpawnerSettings();
 
 }

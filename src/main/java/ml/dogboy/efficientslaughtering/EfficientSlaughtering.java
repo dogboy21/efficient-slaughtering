@@ -81,7 +81,6 @@ public class EfficientSlaughtering {
     @SubscribeEvent
     public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
         if (event.getModID().equals(Reference.MODID)) {
-            System.out.println("CONFIG SYNC");
             ConfigManager.sync(Reference.MODID, Config.Type.INSTANCE);
         }
     }

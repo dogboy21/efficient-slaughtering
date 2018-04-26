@@ -27,6 +27,7 @@ import ml.dogboy.efficientslaughtering.config.ESConfig;
 import ml.dogboy.efficientslaughtering.item.ItemSpawnerUpgrade;
 import ml.dogboy.efficientslaughtering.tileentity.base.BasicEnergyCapability;
 import ml.dogboy.efficientslaughtering.tileentity.base.BasicInventoryCapability;
+import ml.dogboy.efficientslaughtering.tileentity.base.NBTSaveable;
 import ml.dogboy.efficientslaughtering.tileentity.base.PersistantSyncableTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -92,6 +93,7 @@ public class TileSpawner extends PersistantSyncableTileEntity implements ITickab
 
     private EntityLivingBase entityToSpawn = null;
     private Map<String, Integer> upgrades = new HashMap<>();
+    private SpawnerStats spawnerStats = new SpawnerStats();
 
     private BasicInventoryCapability inventory = new BasicInventoryCapability(this, 27);
     private BasicEnergyCapability energy = new BasicEnergyCapability(this, 10000000, 20000, 0);
@@ -102,7 +104,7 @@ public class TileSpawner extends PersistantSyncableTileEntity implements ITickab
             if (this.counterpart == null) {
                 if (this.isValid()) {
                     outer:
-                    for (int i = 1; i < ESConfig.maxSpawnerPlateDistance; i++) {
+                    for (int i = 1; i < ESConfig.spawnerSettings.maxSpawnerPlateDistance; i++) {
                         BlockPos searchPos = this.pos.add(0, i, 0);
                         IBlockState block = this.world.getBlockState(searchPos);
 
@@ -151,7 +153,7 @@ public class TileSpawner extends PersistantSyncableTileEntity implements ITickab
                 if (this.isLower()) {
                     if (!shouldBreak) {
                         outer:
-                        for (int i = 1; i < ESConfig.maxSpawnerPlateDistance; i++) {
+                        for (int i = 1; i < ESConfig.spawnerSettings.maxSpawnerPlateDistance; i++) {
                             BlockPos searchPos = this.pos.add(0, i, 0);
 
                             if (this.world.getBlockState(searchPos).getBlock() == Registry.SPAWNER) {
@@ -184,41 +186,58 @@ public class TileSpawner extends PersistantSyncableTileEntity implements ITickab
             }
         }
 
-        if (!this.world.isRemote) {
+        if (!this.world.isRemote && this.entityToSpawn != null && this.isLower()) {
             int speedUpgrades = this.upgrades.getOrDefault("speed", 0);
             int efficiencyUpgrades = this.upgrades.getOrDefault("efficiency", 0);
             int lootingUpgrades = this.upgrades.getOrDefault("looting", 0);
             int beheadingUpgrades = this.upgrades.getOrDefault("beheading", 0);
             boolean fakePlayer = this.upgrades.getOrDefault("player", 0) > 0;
 
-            int speed = (int) Math.ceil(ESConfig.spawnerBaseWorkTicks * Math.pow(1 - ESConfig.speedUpgradeBonus, speedUpgrades));
-            int energyDraw = (int) Math.ceil(ESConfig.spawnerBaseEnergyDraw * Math.pow(1 - ESConfig.efficiencyUpgradeBonus, efficiencyUpgrades));
+            int speed = (int) Math.ceil(ESConfig.spawnerSettings.spawnerBaseWorkTicks * Math.pow(1 - ESConfig.spawnerSettings.spawnerUpgrades.speedUpgradeBonus, speedUpgrades));
+            int energyDraw = (int) Math.ceil(ESConfig.spawnerSettings.spawnerBaseEnergyDraw * Math.pow(1 - ESConfig.spawnerSettings.spawnerUpgrades.efficiencyUpgradeBonus, efficiencyUpgrades));
+            this.spawnerStats.baseEnergyDraw = energyDraw;
+            if (!this.entityToSpawn.isNonBoss()) {
+                int bossDraw = (int) Math.ceil(energyDraw * ESConfig.spawnerSettings.bossEnergyFactor);
+                energyDraw += bossDraw;
+                this.spawnerStats.additionalBossEnergyDraw = bossDraw;
+            }
+
+            int beheadingExtraCost = (int) Math.ceil(energyDraw * ESConfig.spawnerSettings.spawnerUpgrades.beheadingEnergyCost * beheadingUpgrades);
+            int speedExtraCost = (int) Math.ceil(energyDraw * ESConfig.spawnerSettings.spawnerUpgrades.speedEnergyCost * speedUpgrades);
+            int lootingExtraCost = (int) Math.ceil(energyDraw * ESConfig.spawnerSettings.spawnerUpgrades.lootingEnergyCost * lootingUpgrades);
+            int fakePlayerExtraCost = (int) Math.ceil(energyDraw * ESConfig.spawnerSettings.spawnerUpgrades.fakeplayerEnergyCost * (fakePlayer ? 1 : 0));
+            energyDraw += beheadingExtraCost + speedExtraCost + lootingExtraCost + fakePlayerExtraCost;
+
+            this.spawnerStats.beheadingEnergyDraw = beheadingExtraCost;
+            this.spawnerStats.speedEnergyDraw = speedExtraCost;
+            this.spawnerStats.lootingEnergyDraw = lootingExtraCost;
+            this.spawnerStats.fakePlayerEnergyDraw = fakePlayerExtraCost;
+            this.spawnerStats.totalEnergyDraw = energyDraw;
+            this.spawnerStats.workTicks = speed;
 
             if (this.world.getTotalWorldTime() % speed == 0 && this.energy.getEnergyStored() >= energyDraw) {
-                if (this.entityToSpawn != null && this.isLower()) {
-                    this.entityToSpawn.captureDrops = true;
-                    this.entityToSpawn.capturedDrops.clear();
+                this.entityToSpawn.captureDrops = true;
+                this.entityToSpawn.capturedDrops.clear();
 
-                    if (fakePlayer) {
-                        this.entityToSpawn.attackEntityFrom(TileSpawner.sourceFakePlayer, 0);
-                    }
-
-                    this.entityToSpawn.dropLoot(fakePlayer, lootingUpgrades,
-                            fakePlayer ? TileSpawner.sourceFakePlayer : DamageSource.GENERIC);
-                    this.entityToSpawn.captureDrops = false;
-
-                    if (beheadingUpgrades > 0 && RNG.nextInt(ESConfig.beheadingChance) <= beheadingUpgrades) {
-                        ItemStack head = this.getHead(this.entityToSpawn);
-                        if (head != null) {
-                            this.inventory.insertItem(head);
-                        }
-                    }
-
-                    for (EntityItem item : this.entityToSpawn.capturedDrops) {
-                        this.inventory.insertItem(item.getItem());
-                    }
-                    this.energy.drain(energyDraw);
+                if (fakePlayer) {
+                    this.entityToSpawn.attackEntityFrom(TileSpawner.sourceFakePlayer, 0);
                 }
+
+                this.entityToSpawn.dropLoot(fakePlayer, lootingUpgrades,
+                        fakePlayer ? TileSpawner.sourceFakePlayer : DamageSource.GENERIC);
+                this.entityToSpawn.captureDrops = false;
+
+                if (beheadingUpgrades > 0 && RNG.nextInt(ESConfig.spawnerSettings.spawnerUpgrades.beheadingChance) <= beheadingUpgrades) {
+                    ItemStack head = this.getHead(this.entityToSpawn);
+                    if (head != null) {
+                        this.inventory.insertItem(head);
+                    }
+                }
+
+                for (EntityItem item : this.entityToSpawn.capturedDrops) {
+                    this.inventory.insertItem(item.getItem());
+                }
+                this.energy.drain(energyDraw);
             }
         }
     }
@@ -242,7 +261,7 @@ public class TileSpawner extends PersistantSyncableTileEntity implements ITickab
         return null;
     }
 
-    public boolean isValid() {
+    private boolean isValid() {
         for (Vec3i direction : DirectionHelper.ALL_AROUND) {
             if (this.world.getBlockState(this.pos.add(direction)).getBlock() != Registry.SPAWNER_BASE) {
                 return false;
@@ -333,8 +352,11 @@ public class TileSpawner extends PersistantSyncableTileEntity implements ITickab
 
                             if (!blockSpawning) {
                                 Entity entity = EntityList.createEntityByIDFromName(new ResourceLocation(upgradeItem.getTagCompound().getString("CapturedEntity")), this.world);
-                                if (entity instanceof EntityLivingBase && !SlaughteringRegistry.isBlacklisted((EntityLivingBase) entity)) {
-                                    this.entityToSpawn = (EntityLivingBase) entity;
+                                if (entity instanceof EntityLivingBase) {
+                                    if (!SlaughteringRegistry.isBlacklisted((EntityLivingBase) entity)
+                                            && (entity.isNonBoss() || ESConfig.spawnerSettings.allowBoss)) {
+                                        this.entityToSpawn = (EntityLivingBase) entity;
+                                    }
                                 }
                             }
                         }
@@ -396,12 +418,95 @@ public class TileSpawner extends PersistantSyncableTileEntity implements ITickab
     public void writeData(NBTTagCompound tagCompound) {
         this.inventory.writeToNbt(tagCompound);
         this.energy.writeToNbt(tagCompound);
+        this.spawnerStats.writeToNbt(tagCompound);
     }
 
     @Override
     public void readData(NBTTagCompound tagCompound) {
         this.inventory.readFromNbt(tagCompound);
         this.energy.readFromNbt(tagCompound);
+        this.spawnerStats.readFromNbt(tagCompound);
+    }
+
+    public static class SpawnerStats implements NBTSaveable {
+
+        private int baseEnergyDraw = 0;
+        private int additionalBossEnergyDraw = 0;
+        private int beheadingEnergyDraw = 0;
+        private int speedEnergyDraw = 0;
+        private int lootingEnergyDraw = 0;
+        private int fakePlayerEnergyDraw = 0;
+        private int totalEnergyDraw = 0;
+        private int workTicks = 0;
+
+        @Override
+        public void writeToNbt(NBTTagCompound tagCompound) {
+            NBTTagCompound stats = new NBTTagCompound();
+
+            stats.setInteger("BaseEnergyDraw", this.baseEnergyDraw);
+            stats.setInteger("AdditionalBossEnergyDraw", this.additionalBossEnergyDraw);
+            stats.setInteger("BeheadingEnergyDraw", this.beheadingEnergyDraw);
+            stats.setInteger("SpeedEnergyDraw", this.speedEnergyDraw);
+            stats.setInteger("LootingEnergyDraw", this.lootingEnergyDraw);
+            stats.setInteger("FakePlayerEnergyDraw", this.fakePlayerEnergyDraw);
+            stats.setInteger("TotalEnergyDraw", this.totalEnergyDraw);
+            stats.setInteger("WorkTicks", this.workTicks);
+
+            tagCompound.setTag("Stats", stats);
+        }
+
+        @Override
+        public void readFromNbt(NBTTagCompound tagCompound) {
+            if (tagCompound.hasKey("Stats")) {
+                NBTTagCompound stats = tagCompound.getCompoundTag("Stats");
+
+                this.baseEnergyDraw = stats.getInteger("BaseEnergyDraw");
+                this.additionalBossEnergyDraw = stats.getInteger("AdditionalBossEnergyDraw");
+                this.beheadingEnergyDraw = stats.getInteger("BeheadingEnergyDraw");
+                this.speedEnergyDraw = stats.getInteger("SpeedEnergyDraw");
+                this.lootingEnergyDraw = stats.getInteger("LootingEnergyDraw");
+                this.fakePlayerEnergyDraw = stats.getInteger("FakePlayerEnergyDraw");
+                this.totalEnergyDraw = stats.getInteger("TotalEnergyDraw");
+                this.workTicks = stats.getInteger("WorkTicks");
+            }
+        }
+
+        public int getBaseEnergyDraw() {
+            return this.baseEnergyDraw;
+        }
+
+        public int getAdditionalBossEnergyDraw() {
+            return this.additionalBossEnergyDraw;
+        }
+
+        public int getBeheadingEnergyDraw() {
+            return this.beheadingEnergyDraw;
+        }
+
+        public int getSpeedEnergyDraw() {
+            return this.speedEnergyDraw;
+        }
+
+        public int getLootingEnergyDraw() {
+            return this.lootingEnergyDraw;
+        }
+
+        public int getFakePlayerEnergyDraw() {
+            return this.fakePlayerEnergyDraw;
+        }
+
+        public int getTotalEnergyDraw() {
+            return this.totalEnergyDraw;
+        }
+
+        public int getWorkTicks() {
+            return this.workTicks;
+        }
+
+    }
+
+    public SpawnerStats getSpawnerStats() {
+        return this.spawnerStats;
     }
 
 }

@@ -18,6 +18,7 @@
 
 package ml.dogboy.efficientslaughtering.tileentity.base;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -176,6 +177,8 @@ public class BasicInventoryCapability implements IItemHandler, NBTSaveable {
 
     private void onContentsChanged() {
         this.holder.markDirty();
+        IBlockState blockState = this.holder.getWorld().getBlockState(this.holder.getPos());
+        this.holder.getWorld().notifyBlockUpdate(this.holder.getPos(), blockState, blockState, 2);
     }
 
 }

@@ -22,6 +22,7 @@ import ml.dogboy.efficientslaughtering.block.BlockBallBlender;
 import ml.dogboy.efficientslaughtering.block.BlockSpawner;
 import ml.dogboy.efficientslaughtering.block.BlockSpawnerBase;
 import ml.dogboy.efficientslaughtering.entity.EntityCapturingBall;
+import ml.dogboy.efficientslaughtering.item.ItemAnalyzer;
 import ml.dogboy.efficientslaughtering.item.ItemCapturingBall;
 import ml.dogboy.efficientslaughtering.item.ItemSpawnerUpgrade;
 import ml.dogboy.efficientslaughtering.item.ItemSpawningCore;
@@ -48,6 +49,7 @@ public class Registry {
     public static final Item CAPTURING_BALL = Items.AIR;
     public static final Item SPAWNING_CORE = Items.AIR;
     public static final Item SPAWNER_UPGRADE = Items.AIR;
+    public static final Item ANALYZER = Items.AIR;
 
     public static final Block BALL_BLENDER = Blocks.AIR;
     public static final Block SPAWNER = Blocks.AIR;
@@ -63,6 +65,7 @@ public class Registry {
                 new ItemCapturingBall(),
                 new ItemSpawningCore(),
                 new ItemSpawnerUpgrade(),
+                new ItemAnalyzer(),
 
 
                 BALL_BLENDER_ITEM = new ItemBlock(BALL_BLENDER).setRegistryName(BALL_BLENDER.getRegistryName()),

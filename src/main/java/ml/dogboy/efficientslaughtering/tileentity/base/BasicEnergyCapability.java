@@ -18,6 +18,7 @@
 
 package ml.dogboy.efficientslaughtering.tileentity.base;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.energy.EnergyStorage;
@@ -65,6 +66,8 @@ public class BasicEnergyCapability extends EnergyStorage implements NBTSaveable 
 
     public void onContentsChanged() {
         this.holder.markDirty();
+        IBlockState blockState = this.holder.getWorld().getBlockState(this.holder.getPos());
+        this.holder.getWorld().notifyBlockUpdate(this.holder.getPos(), blockState, blockState, 2);
     }
 
 }

@@ -19,8 +19,11 @@
 package ml.dogboy.efficientslaughtering.client.renderer.tileentity;
 
 import ml.dogboy.efficientslaughtering.Reference;
+import ml.dogboy.efficientslaughtering.Registry;
+import ml.dogboy.efficientslaughtering.config.ESConfig;
 import ml.dogboy.efficientslaughtering.tileentity.TileSpawner;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -29,8 +32,14 @@ import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.energy.IEnergyStorage;
 
 public class RenderSpawner extends TileEntitySpecialRenderer<TileSpawner> {
 
@@ -60,11 +69,28 @@ public class RenderSpawner extends TileEntitySpecialRenderer<TileSpawner> {
             GlStateManager.disableFog();
             GlStateManager.enableBlend();
 
-            RenderSpawner.renderBeamSegment(x, y, z, partialTicks, height, 0.1875d);
+            RenderSpawner.renderBeamSegment(x, y, z, partialTicks, height, 0.3125d);
 
             GlStateManager.disableBlend();
             GlStateManager.enableFog();
             GlStateManager.popMatrix();
+
+            EntityPlayerSP player = Minecraft.getMinecraft().player;
+            if (Minecraft.isGuiEnabled() && (player.isSneaking() || ESConfig.clientSettings.alwaysShowEnergyHud)) {
+                Vec3d start = player.getPositionEyes(partialTicks);
+                Vec3d lookVec = player.getLook(partialTicks);
+                Vec3d end = start.addVector(lookVec.x * 5, lookVec.y * 5, lookVec.z * 5);
+
+                RayTraceResult rayTraceResult = this.getWorld().rayTraceBlocks(start, end, false);
+                if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK
+                        && this.getWorld().getBlockState(rayTraceResult.getBlockPos()).getBlock() == Registry.SPAWNER) {
+                    TileEntity tileEntity = this.getWorld().getTileEntity(rayTraceResult.getBlockPos());
+                    if (tileEntity instanceof TileSpawner) {
+                        IEnergyStorage energyStorage = tileEntity.getCapability(CapabilityEnergy.ENERGY, EnumFacing.DOWN);
+                        this.drawNameplate(te, energyStorage.getEnergyStored() + " / " + energyStorage.getMaxEnergyStored() + " FE", x, y, z, 32);
+                    }
+                }
+            }
         }
     }
 

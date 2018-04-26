@@ -92,13 +92,13 @@ public class TileBallBlender extends PersistantSyncableTileEntity implements ITi
         if (this.isMaster && !this.world.isRemote) {
             if (this.progress == -1) {
                 if (this.canStartProgress()) {
-                    this.progress = ESConfig.ballBlenderWorkTicks;
+                    this.progress = ESConfig.ballBlenderSettings.ballBlenderWorkTicks;
                     this.triggerUpdate();
                 }
             }
 
-            if (this.progress > 0 && this.storedEnergy >= ESConfig.ballBlenderEnergyDraw) {
-                this.storedEnergy -= ESConfig.ballBlenderEnergyDraw;
+            if (this.progress > 0 && this.storedEnergy >= ESConfig.ballBlenderSettings.ballBlenderEnergyDraw) {
+                this.storedEnergy -= ESConfig.ballBlenderSettings.ballBlenderEnergyDraw;
                 this.progress--;
                 if (this.progress == 0) {
                     for (int i = 0; i < 8; i++) {
@@ -307,7 +307,7 @@ public class TileBallBlender extends PersistantSyncableTileEntity implements ITi
     @Override
     public int receiveEnergy(int maxReceive, boolean simulate) {
         if (this.isMaster) {
-            int receiveable = Math.min(maxReceive, ESConfig.ballBlenderEnergyCapacity - this.storedEnergy);
+            int receiveable = Math.min(maxReceive, ESConfig.ballBlenderSettings.ballBlenderEnergyCapacity - this.storedEnergy);
             if (!simulate) {
                 this.storedEnergy += receiveable;
                 this.triggerUpdate();
@@ -351,7 +351,7 @@ public class TileBallBlender extends PersistantSyncableTileEntity implements ITi
     @Override
     public int getMaxEnergyStored() {
         if (this.isMaster) {
-            return ESConfig.ballBlenderEnergyCapacity;
+            return ESConfig.ballBlenderSettings.ballBlenderEnergyCapacity;
         }
 
         TileBallBlender master = this.getMaster();
